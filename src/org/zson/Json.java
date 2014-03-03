@@ -101,7 +101,7 @@ public class Json{
   }
 
   private static final class JsonReader{
-    static final StringBuilder container = new StringBuilder();
+    final StringBuilder container = new StringBuilder();
     final boolean esacpe = true;
     int position = 0;
     String source;
