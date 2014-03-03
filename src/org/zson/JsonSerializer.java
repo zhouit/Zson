@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * json序列化工具
+ * json序列化工具,默认不序列化transient和static变量
  * 
  * @author zhou
  * 

@@ -5,6 +5,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Json抽象类
+ * @author zhou
+ *
+ */
 public class Json{
   List<Json> arrays;
   Map<String, Json> obj;
