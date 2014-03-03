@@ -13,5 +13,5 @@ Zson is a library for reading and writing json in Java. Its designed to be simpl
     Type type=new TypeReference<List<SomeBean>>(){}.getType();
     List<SomeBean> result=new JsonDeserializer().deserialize(json,type);
     
-### ×÷Õß²©¿Í
+### ä½œè€…åšå®¢
   (http://www.zhouhaocheng.cn)
