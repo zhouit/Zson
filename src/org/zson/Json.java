@@ -133,6 +133,11 @@ public class Json{
 
       position++;
       Map<String, Json> map = new HashMap<String, Json>();
+      skipBlank();
+      if(source.charAt(position) == '}'){
+        position++;
+        return new Json(map);
+      }
 
       while(true){
         String field = keySegment();
@@ -163,6 +168,12 @@ public class Json{
 
       position++;
       List<Json> list = new ArrayList<Json>();
+      skipBlank();
+      if(source.charAt(position) == ']'){
+        position++;
+        return new Json(list);  
+      }
+      
       while(true){
         Json node = valueSegment();
         if(node.isEmpty())
