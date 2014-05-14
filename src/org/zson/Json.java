@@ -7,6 +7,7 @@ import java.util.Map;
 
 /**
  * Json抽象类
+ * 
  * @author zhou
  *
  */
@@ -29,9 +30,10 @@ public class Json{
   public Json(Object data){
     this.data = data;
   }
-  
-  public static Json from(String json){
-    return json==null?new Json():new JsonReader(json).parse();
+
+  public static Json from(String json, boolean unicode){
+    return json == null ? new Json()
+        : new JsonReader(unicode ? Unicoder.decode(json.trim()) : json).parse();
   }
 
   public boolean isArray(){
@@ -95,12 +97,9 @@ public class Json{
   }
 
   public String toString(){
-    if(isArray())
-      return arrays.toString();
-    if(isObject())
-      return obj.toString();
-    if(isSimple())
-      return data.toString();
+    if(isArray()) return arrays.toString();
+    if(isObject()) return obj.toString();
+    if(isSimple()) return data.toString();
 
     return null;
   }
@@ -119,17 +118,14 @@ public class Json{
       skipBlank();
 
       Json result = objectStart();
-      if(result == null)
-        result = arrayStart();
-      if(result == null)
-        result = valueSegment();
+      if(result == null) result = arrayStart();
+      if(result == null) result = valueSegment();
 
       return result;
     }
 
     Json objectStart(){
-      if(source.charAt(position) != '{')
-        return null;
+      if(source.charAt(position) != '{') return null;
 
       position++;
       Map<String, Json> map = new HashMap<String, Json>();
@@ -141,8 +137,7 @@ public class Json{
 
       while(true){
         String field = keySegment();
-        if(field.length() == 0)
-          break;
+        if(field.length() == 0) break;
 
         // 略过一个:和QUATO
         position++;
@@ -151,8 +146,7 @@ public class Json{
 
         map.put(field, valueSegment());
         skipBlank();
-        if(source.charAt(position) == '}')
-          break;
+        if(source.charAt(position) == '}') break;
 
         // 略过','
         position++;
@@ -163,26 +157,23 @@ public class Json{
     }
 
     Json arrayStart(){
-      if(source.charAt(position) != '[')
-        return null;
+      if(source.charAt(position) != '[') return null;
 
       position++;
       List<Json> list = new ArrayList<Json>();
       skipBlank();
       if(source.charAt(position) == ']'){
         position++;
-        return new Json(list);  
+        return new Json(list);
       }
-      
+
       while(true){
         Json node = valueSegment();
-        if(node.isEmpty())
-          break;
+        if(node.isEmpty()) break;
 
         list.add(node);
         skipBlank();
-        if(source.charAt(position) == ']')
-          break;
+        if(source.charAt(position) == ']') break;
 
         // 略过','
         position++;
@@ -199,14 +190,12 @@ public class Json{
       char quato = source.charAt(position++);
       for(; position < source.length(); position++){
         char temp = source.charAt(position);
-        if(temp < 32)
-          continue;
+        if(temp < 32) continue;
         if(temp == '\\' && esacpe && position + 1 < source.length()){
           container.append(source.charAt(++position));
           continue;
         }
-        if(temp == quato || temp == '}')
-          break;
+        if(temp == quato || temp == '}') break;
 
         container.append(temp);
       }
@@ -243,8 +232,7 @@ public class Json{
       for(; position < source.length(); position++){
         char newTemp = source.charAt(position);
         if(newTemp == '\\' && esacpe){
-          if(position + 1 < source.length())
-            container.append(source.charAt(++position));
+          if(position + 1 < source.length()) container.append(source.charAt(++position));
           continue;
         }
         if(newTemp == quato){
@@ -261,11 +249,9 @@ public class Json{
     Json boolnumStart(){
       for(; position < source.length(); position++){
         char temp = source.charAt(position);
-        if(temp < 32)
-          continue;
+        if(temp < 32) continue;
         if(temp == '\\' && esacpe){
-          if(position + 1 < source.length())
-            container.append(source.charAt(++position));
+          if(position + 1 < source.length()) container.append(source.charAt(++position));
           continue;
         }
         if(temp == ',' || temp == '}' || temp == ']'){
@@ -277,14 +263,10 @@ public class Json{
 
       Object data = null;
       String value = getContent();
-      if(value.matches("^-?[1-9]\\d*|0$"))
-        data = Long.parseLong(value);
-      else if(value.matches("^[1-9]\\d*\\.\\d*|0\\.\\d*|0$"))
-        data = Double.parseDouble(value);
-      else if("true".equals(value) || "false".equals(value))
-        data = Boolean.parseBoolean(value);
-      else if("null".equals(value))
-        data = null;
+      if(value.matches("^-?[1-9]\\d*|0$")) data = Long.parseLong(value);
+      else if(value.matches("^[1-9]\\d*\\.\\d*|0\\.\\d*|0$")) data = Double.parseDouble(value);
+      else if("true".equals(value) || "false".equals(value)) data = Boolean.parseBoolean(value);
+      else if("null".equals(value)) data = null;
       else
         throw new RuntimeException("parse json error near " + value + " at " + source);
 
@@ -296,16 +278,14 @@ public class Json{
      */
     private void skipBlank(){
       for(; position < source.length(); position++){
-        if(source.charAt(position) > 32)
-          break;
+        if(source.charAt(position) > 32) break;
       }
     }
 
     private String getContent(){
       String result = container.toString();
       container.delete(0, container.length());
-      if(result.length() == 0)
-        result = null;
+      if(result.length() == 0) result = null;
       return result;
     }
 

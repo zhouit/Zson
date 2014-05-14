@@ -26,6 +26,7 @@ public final class JsonSerializer{
   private boolean ignoreParentAttr = false;
   private boolean escapeChar = false;
   private boolean ignoreNull = true;
+  private boolean unicode = false;
 
   private int depth = 1;
   private String indent;
@@ -42,7 +43,7 @@ public final class JsonSerializer{
   public String serialize(Object obj){
     String result = new ObjectSerializer().serialize(obj);
     depth = 1;
-    return result;
+    return unicode ? Unicoder.encode(result) : result;
   }
 
   /**
@@ -90,6 +91,17 @@ public final class JsonSerializer{
     for(int i = 0; i < indentSpace; i++){
       indent += " ";
     }
+    return this;
+  }
+
+  /**
+   * 是否使用unicode编码字符串,默认不启用
+   * 
+   * @param unicode
+   * @return
+   */
+  public JsonSerializer unicodeOutput(boolean unicode){
+    this.unicode = unicode;
     return this;
   }
 
@@ -356,7 +368,7 @@ public final class JsonSerializer{
      * @param content
      */
     void afterSerializeAttr(Object field, StringBuilder content){
-      if(indent == null|| field == null || isPrimitive(field) ){
+      if(indent == null || field == null || isPrimitive(field)){
         content.append(',');
         appSeparator(content);
       }else{
@@ -383,8 +395,7 @@ public final class JsonSerializer{
       try{
         Field[] fields = clazz.getDeclaredFields();
         for(Field field : fields){
-          if(Modifier.isStatic(field.getModifiers())
-              || Modifier.isTransient(field.getModifiers())) continue;
+          if(Modifier.isStatic(field.getModifiers()) || Modifier.isTransient(field.getModifiers())) continue;
 
           Object fieldValue = null;
           boolean access = field.isAccessible();
@@ -432,8 +443,8 @@ public final class JsonSerializer{
     }
 
     private boolean isPrimitive(Object obj){
-      return obj instanceof Boolean || obj instanceof Number
-          || obj instanceof CharSequence || obj instanceof Date || obj instanceof Enum;
+      return obj instanceof Boolean || obj instanceof Number || obj instanceof CharSequence
+          || obj instanceof Date || obj instanceof Enum;
     }
 
   }

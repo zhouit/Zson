@@ -34,6 +34,7 @@ import java.util.TreeSet;
 public final class JsonDeserializer{
   private final List<Deserializer> deserializers = new ArrayList<Deserializer>();
   private String dateFormat = "yyyy-MM-dd HH:mm:ss";
+  private boolean unicode = false;
 
   public JsonDeserializer(){
     this.deserializers.add(new PrimitiveDeserializer());
@@ -51,6 +52,17 @@ public final class JsonDeserializer{
     return this;
   }
 
+  /**
+   * 是否使用unicode解码源字符串,默认不启用
+   * 
+   * @param unicode
+   * @return
+   */
+  public JsonDeserializer unicodeDecode(boolean unicode){
+    this.unicode = unicode;
+    return this;
+  }
+
   private Deserializer findDeserializer(Class<?> clazz){
     for(Deserializer desc : deserializers){
       if(desc.canDeserialize(clazz)){
@@ -62,26 +74,25 @@ public final class JsonDeserializer{
   }
 
   public <T> T deserialize(String source, Class<T> clazz){
-    Json json = Json.from(source);
+    Json json = Json.from(source, unicode);
     return new ObjectDeserializer().jsonToObject(json, clazz);
   }
 
   public Object deserialize(String source, Type type){
-    Json json = Json.from(source);
+    Json json = Json.from(source, unicode);
     ParameterizedType pt = (ParameterizedType) type;
     return new ObjectDeserializer().jsonToObject(json, pt.getActualTypeArguments()[0]);
   }
 
   public Object deserialize(String source){
-    Json json = Json.from(source);
+    Json json = Json.from(source, unicode);
     return new ObjectDeserializer().jsonToObject(json);
   }
 
   private static boolean hasSuper(Class<?> clazz, Class<?> suprz){
     Class<?> temp = clazz;
     while(temp != null && temp != Object.class){
-      if(temp == suprz)
-        return true;
+      if(temp == suprz) return true;
 
       temp = temp.getSuperclass();
     }
@@ -90,23 +101,20 @@ public final class JsonDeserializer{
   }
 
   static boolean hasInterface(Class<?> clazz, Class<?> face){
-    if(clazz == face)
-      return true;
+    if(clazz == face) return true;
 
     Queue<Class<?>> queue = new ArrayDeque<Class<?>>();
     Class<?> tempClass = clazz;
     do{
       for(Class<?> temp : tempClass.getInterfaces()){
-        if(temp == face)
-          return true;
+        if(temp == face) return true;
         queue.offer(temp);
       }
 
       while(!queue.isEmpty()){
         Class<?> first = queue.remove();
         for(Class<?> temp : first.getInterfaces()){
-          if(temp == face)
-            return true;
+          if(temp == face) return true;
           queue.add(temp);
         }
       }
@@ -141,22 +149,15 @@ public final class JsonDeserializer{
     }
 
     public Object fromJson(Json json, Class<?> clazz){
-      if(clazz == byte.class || clazz == Byte.class)
-        return json.getDataAsByte();
-      else if(clazz == Integer.TYPE || clazz == Integer.class)
-        return json.getDataAsInteger();
-      else if(clazz == Long.TYPE || clazz == Long.class)
-        return json.getDataAsLong();
-      else if(clazz == Float.TYPE || clazz == Float.class)
-        return json.getDataAsFloat();
-      else if(clazz == Double.TYPE || clazz == Double.class)
-        return json.getDataAsDouble();
+      if(clazz == byte.class || clazz == Byte.class) return json.getDataAsByte();
+      else if(clazz == Integer.TYPE || clazz == Integer.class) return json.getDataAsInteger();
+      else if(clazz == Long.TYPE || clazz == Long.class) return json.getDataAsLong();
+      else if(clazz == Float.TYPE || clazz == Float.class) return json.getDataAsFloat();
+      else if(clazz == Double.TYPE || clazz == Double.class) return json.getDataAsDouble();
       else if(clazz == Character.TYPE || clazz == Character.class){
         return json.getDataAsString().charAt(0);
-      }else if(clazz == BigInteger.class)
-        return new BigInteger(json.getDataAsString());
-      else if(clazz == BigDecimal.class)
-        return new BigDecimal(json.getDataAsString());
+      }else if(clazz == BigInteger.class) return new BigInteger(json.getDataAsString());
+      else if(clazz == BigDecimal.class) return new BigDecimal(json.getDataAsString());
 
       return null;
     }
@@ -169,12 +170,9 @@ public final class JsonDeserializer{
     }
 
     public Object fromJson(Json json, Class<?> clazz){
-      if(clazz == String.class)
-        return json.getDataAsString();
-      else if(clazz == StringBuilder.class)
-        return new StringBuffer(json.getDataAsString());
-      else if(clazz == StringBuffer.class)
-        return new StringBuffer(json.getDataAsString());
+      if(clazz == String.class) return json.getDataAsString();
+      else if(clazz == StringBuilder.class) return new StringBuffer(json.getDataAsString());
+      else if(clazz == StringBuffer.class) return new StringBuffer(json.getDataAsString());
 
       return null;
     }
@@ -231,8 +229,7 @@ public final class JsonDeserializer{
     }
   }
 
-  private class CollectionDeserializer extends ObjectDeserializer implements
-      ComplexDeserializer{
+  private class CollectionDeserializer extends ObjectDeserializer implements ComplexDeserializer{
     public boolean canDeserialize(Class<?> clazz){
       return hasInterface(clazz, Collection.class);
     }
@@ -299,14 +296,13 @@ public final class JsonDeserializer{
           result.put(entry.getKey(), jsonToObject(entry.getValue()));
         }
       }else if(types.length == 2){
-        if(types[0] != String.class)
-          throw new RuntimeException("only supports String keys");
+        if(types[0] != String.class) throw new RuntimeException("only supports String keys");
         for(Map.Entry<String, Json> entry : json.getObject().entrySet()){
           if(types[1] instanceof Class){
             result.put(entry.getKey(), jsonToObject(entry.getValue(), (Class<?>) types[1]));
           }else{
-            result.put(entry.getKey(),
-                jsonToObject(entry.getValue(), (ParameterizedType) types[1]));
+            result
+                .put(entry.getKey(), jsonToObject(entry.getValue(), (ParameterizedType) types[1]));
           }
         }
       }
@@ -325,8 +321,8 @@ public final class JsonDeserializer{
       Object obj = null;
       try{
         obj = clazz.newInstance();
-        PropertyDescriptor[] pds = Introspector.getBeanInfo(clazz,
-            Introspector.USE_ALL_BEANINFO).getPropertyDescriptors();
+        PropertyDescriptor[] pds = Introspector.getBeanInfo(clazz, Introspector.USE_ALL_BEANINFO)
+            .getPropertyDescriptors();
         for(Map.Entry<String, Json> entry : json.getObject().entrySet()){
           for(PropertyDescriptor pd : pds){
             if(pd.getName().equals(entry.getKey())){
@@ -356,10 +352,8 @@ public final class JsonDeserializer{
     }
 
     Object jsonToObject(Json json){
-      if(json.isObject())
-        return new MapDeserializer().fromJson(json, HashMap.class);
-      if(json.isArray())
-        return new CollectionDeserializer().fromJson(json, LinkedList.class);
+      if(json.isObject()) return new MapDeserializer().fromJson(json, HashMap.class);
+      if(json.isArray()) return new CollectionDeserializer().fromJson(json, LinkedList.class);
 
       return json.getValue();
     }
@@ -369,8 +363,7 @@ public final class JsonDeserializer{
     }
 
     <T> T jsonToObject(Json json, Type type){
-      if(type instanceof Class)
-        return jsonToObject(json, (Class<T>) type);
+      if(type instanceof Class) return jsonToObject(json, (Class<T>) type);
 
       ParameterizedType ptype = (ParameterizedType) type;
       Class<?> rawClass = (Class<?>) ptype.getRawType();
