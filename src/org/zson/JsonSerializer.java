@@ -43,7 +43,7 @@ public final class JsonSerializer{
   public String serialize(Object obj){
     String result = new ObjectSerializer().serialize(obj);
     depth = 1;
-    return unicode ? Unicoder.encode(result) : result;
+    return unicode && result != null ? Unicoder.encode(result) : result;
   }
 
   /**
