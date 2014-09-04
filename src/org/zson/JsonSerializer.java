@@ -180,7 +180,8 @@ public final class JsonSerializer{
         for(int i = 0; i < result.length(); i++){
           char c = result.charAt(i);
           if(c == '"' || c == '\\') builder.append("\\");
-          builder.append(c);
+          
+          builder.append(c == '\t' ? "\\t" : c);
         }
 
         result = builder.toString();
